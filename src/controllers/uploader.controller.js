@@ -30,7 +30,45 @@ const exceluploader = async (req, res) => {
       });
     });
 
-    const artist = await Artist.insertMany(artistArray);
+    const requiredKeys = ["name", "email", "about", "speciality"];
+
+    // validArray --> a array of objects with key are ["name", "email", "about", "speciality"];
+    const validArray = artistArray.map((obj) => {
+      return requiredKeys.every(key => obj.hasOwnProperty(key)) && obj;
+    });
+
+    const isValidData = validArray.every(key => key ? true : false);
+
+    if (!isValidData) {
+      return res.status(400).json({
+        msg: "Select correct format file",
+      });
+    };
+
+    const bulkOperations = validArray.map((artist) => ({
+      updateOne: {
+        filter: { email: artist.email },
+        update: { $set: artist },
+        upsert: true
+      }
+    }));
+
+    const artist = await Artist.bulkWrite(bulkOperations);
+
+    // Delete documents from the database that are not in the uploaded file
+    const emailsInFile = validArray.map(artist => artist.email);
+
+    const deleteQuery = {
+      $or: [
+        { email: { $nin: emailsInFile } }, // Email not in the file
+        { email: { $exists: false } }, // Email is undefined
+        { email: "" } // Email is an empty string
+      ]
+    };
+
+    const deleteResult = await Artist.deleteMany(deleteQuery);
+
+    // const artist = await Artist.insertMany(validArray);
 
     fs.unlink(file.path, (err) => {
       if (err) {
@@ -41,7 +79,8 @@ const exceluploader = async (req, res) => {
     });
 
     res.json({
-      msg: "File Uploaded",
+      message: "File Uploaded",
+      success: true,
       file: req.file?.filename,
       artist,
     });
@@ -52,57 +91,16 @@ const exceluploader = async (req, res) => {
   }
 };
 
-// async function importExcelData2MongoDB(filePath) {
-//   try {
-//     console.log({ filePath });
+const getAllExcelJSONData = async (req, res) => {
 
-//     const filePathAddress = "./public/temp/" + filePath.filename;
+  const artist = await Artist.aggregate([{ $match: {} }]);
 
-//     const excelData = excelToJson({
-//       sourceFile: filePathAddress,
-//       sheets: [
-//         {
-//           name: filePath.filename.split(".")[0],
-//           header: {
-//             rows: 1,
-//           },
-//           columnToKey: {
-//             A: "speciality",
-//             B: "about",
-//             C: "name",
-//             D: "email",
-//           },
-//         },
-//       ],
-//     });
-
-//     console.log({ excelData });
-
-//     const sheetName = filePath.filename.split(".")[0];
-
-//     if (!excelData[sheetName] || excelData[sheetName].length === 0) {
-//       throw new Error(`No data found in the '${sheetName}' sheet.`);
-//     }
-
-//     const client = await MongoClient.connect(process.env.MONGODB_URI, {
-//       useNewUrlParser: true,
-//       useUnifiedTopology: true,
-//     });
-//     console.log("Connected to MongoDB");
-
-//     const db = client.db("exceltojson");
-//     const collection = db.collection("artists");
-
-//     const result = await collection.insertMany(excelData[sheetName]);
-//     console.log("Number of documents inserted:", result.insertedCount);
-
-//     client.close();
-//     fs.unlinkSync(filePath.path);
-//   } catch (err) {
-//     console.log("Error importing data to MongoDB:", err);
-//     throw err;
-//   }
-// }
+  res.status(200).json({
+    message: "Data send success",
+    success: true,
+    artist,
+  })
+};
 
 
-export { exceluploader };
+export { exceluploader, getAllExcelJSONData };

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   exceluploader,
+  getAllExcelJSONData
   // logoutUser,
   // registerUser, 
   // refreshAccessToken,  
@@ -32,10 +33,9 @@ const router = Router()
 //     )
 
 router.route("/upload-file").post(upload.single("uploadfile"), exceluploader);
-router.route("/login").get((req, res) => {
-  console.log("object");
-  return res.status(200).json({ ok: true });
-})
+router.route("/data").get(getAllExcelJSONData)
+
+// router.route("/data").get(getAllExcelJSONData);
 
 //secured routes
 // router.route("/logout").post(verifyJWT,  logoutUser)
