@@ -45,17 +45,28 @@ const exceluploader = async (req, res) => {
       });
     };
 
-    const bulkOperations = validArray.map((artist) => ({
-      updateOne: {
-        filter: { email: artist.email },
-        update: { $set: artist },
-        upsert: true
-      }
-    }));
+    console.log(validArray);
 
-    const artist = await Artist.bulkWrite(bulkOperations);
+    await Artist.deleteMany({});
 
-    // Delete documents from the database that are not in the uploaded file
+    const artist = await Artist.insertMany(validArray.map((artist) => ({
+      email: artist.email,
+      name: artist.name,
+      about: artist.about,
+      speciality: artist.speciality,
+    })));
+
+    // const bulkOperations = validArray.map((artist) => ({
+    //   updateOne: {
+    //     filter: { email: artist.email },
+    //     update: { $set: artist },
+    //     upsert: true
+    //   }
+    // }));
+
+    // const artist = await Artist.bulkWrite(bulkOperations);
+
+    // // Delete documents from the database that are not in the uploaded file
     const emailsInFile = validArray.map(artist => artist.email);
 
     const deleteQuery = {
