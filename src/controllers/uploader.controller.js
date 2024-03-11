@@ -65,8 +65,8 @@ const exceluploader = async (req, res) => {
         { email: "" } // Email is an empty string
       ]
     };
-
-    const deleteResult = await Artist.deleteMany(deleteQuery);
+    
+    await Artist.deleteMany(deleteQuery);
 
     // const artist = await Artist.insertMany(validArray);
 
@@ -102,5 +102,39 @@ const getAllExcelJSONData = async (req, res) => {
   })
 };
 
+const getExcelJSONDataById = async (req, res) => {
 
-export { exceluploader, getAllExcelJSONData };
+  const { id } = req.params;
+
+  if (!id) {
+    throw new Error("param id not found!")
+  };
+
+  const artistById = await Artist.findOne({ _id: id }).exec();
+
+  res.status(200).json({
+    message: "Data send success",
+    success: true,
+    artistById,
+  })
+};
+
+const updatArtistById = async (req, res) => {
+  const { id } = req.params;
+  const formData = req.body;
+
+  if (!id) {
+    throw new Error("param id not found!")
+  };
+
+  const data = await Artist.findById(id);
+
+  await Artist.findByIdAndUpdate(id, { name: formData?.name || data?.name, email: formData?.email || data?.email, about: formData?.about || data?.about, speciality: formData?.speciality || data?.speciality }, { new: true })
+
+  res.status(200).json({
+    message: "Data updated success",
+    success: true,
+  })
+}
+
+export { exceluploader, getAllExcelJSONData, getExcelJSONDataById, updatArtistById };

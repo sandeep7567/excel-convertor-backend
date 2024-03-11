@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   exceluploader,
-  getAllExcelJSONData
+  getAllExcelJSONData,
+  getExcelJSONDataById,
+  updatArtistById
   // logoutUser,
   // registerUser, 
   // refreshAccessToken,  
@@ -34,6 +36,8 @@ const router = Router()
 
 router.route("/upload-file").post(upload.single("uploadfile"), exceluploader);
 router.route("/data").get(getAllExcelJSONData)
+router.route("/get-all-excel-data").get(getAllExcelJSONData)
+router.route("/:id").get(getExcelJSONDataById).patch(updatArtistById).patch(updatArtistById);
 
 // router.route("/data").get(getAllExcelJSONData);
 
